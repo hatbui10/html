@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Editor - Precision Debug</title>
+<title>Mini Editor Ultra Pro</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: white; overflow: hidden; }
@@ -24,16 +24,18 @@
   #error-log { display: none; background: #4a1515; color: #ff9999; padding: 10px; font-family: monospace; font-size: 12px; border-bottom: 1px solid #ff4d4d; line-height: 1.5; }
   iframe { height: 55%; width: 100%; background: white; border: none; }
 
-  /* POPUP */
-  .popup { position: fixed; bottom: 0; left: 0; right: 0; background: #252526; border-top: 2px solid #0078d4; padding: 15px; display: none; flex-direction: column; max-height: 60%; z-index: 1000; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; overflow-y: auto; padding-bottom: 20px; }
-  .grid button { padding: 10px; border: 1px solid #444; border-radius: 4px; background: #333; color: #ddd; cursor: pointer; font-size: 11px; text-align: left; }
+  /* POPUP MENU */
+  .popup { position: fixed; bottom: 0; left: 0; right: 0; background: #252526; border-top: 2px solid #0078d4; padding: 15px; display: none; flex-direction: column; max-height: 60%; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.5); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 8px; overflow-y: auto; padding-bottom: 20px; }
+  .grid button { padding: 12px 5px; border: 1px solid #444; border-radius: 4px; background: #333; color: #ddd; cursor: pointer; font-size: 12px; font-weight: bold; }
+  .grid button:active { background: #0078d4; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <button onclick="openPopup('html')">HTML</button>
+  <button style="background: #444;" onclick="openPopup('quick')">⌨️ Ký tự nhanh</button>
+  <button onclick="openPopup('html')">HTML Thẻ</button>
   <button onclick="openPopup('css')">CSS</button>
   <button onclick="openPopup('js')">JS</button>
   <button class="btn-run" onclick="runCode()">CHẠY (RUN) ▶</button>
@@ -42,9 +44,9 @@
 <div class="main">
   <div class="editor-container">
     <div id="line-numbers" class="line-numbers"></div>
-    <textarea id="code" spellcheck="false" oninput="updateLineNumbers()" onscroll="syncScroll()"><h1>Test Lỗi</h1>
+    <textarea id="code" spellcheck="false" oninput="updateLineNumbers()" onscroll="syncScroll()"><h1>Chào bạn!</h1>
 <script>
-  console.log("Thiếu ngoặc"
+  console.log("Học Code Pro");
 </script></textarea>
   </div>
   <div id="error-log"></div>
@@ -52,9 +54,9 @@
 </div>
 
 <div class="popup" id="popup">
-  <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
-     <b id="pop-title">MENU</b>
-     <span onclick="closePopup()" style="color:red; cursor:pointer; font-weight:bold;">ĐÓNG [X]</span>
+  <div style="display:flex; justify-content: space-between; margin-bottom: 15px; align-items: center;">
+     <b id="pop-title" style="color:#0078d4; font-size: 14px;">CÔNG CỤ</b>
+     <span onclick="closePopup()" style="color:#ff4d4d; cursor:pointer; font-weight:bold; padding: 5px 10px;">ĐÓNG [X]</span>
   </div>
   <div class="grid" id="grid"></div>
 </div>
@@ -67,28 +69,55 @@ const preview = document.getElementById("preview");
 const grid = document.getElementById("grid");
 const popup = document.getElementById("popup");
 
-/* HÀM CÔNG CỤ */
+/* DỮ LIỆU NÚT BẤM */
 const data = {
-  html: [{n:"<style>", a:()=>wrap("<style>\n","\n</style>")}, {n:"<script>", a:()=>wrap("<script>\n","\n<\/script>")}, {n:"<div>", a:()=>wrap("<div>","</div>")}],
-  css: [{n:"display: flex", a:()=>ins("display: flex;")}, {n:"gap", a:()=>ins("gap: 10px;")}, {n:"border-radius", a:()=>ins("border-radius: 8px;")}],
-  js: [{n:"console.log", a:()=>ins('console.log("");')}, {n:"alert", a:()=>ins('alert("");')}]
+  quick: [
+    {n:"<", a:()=>ins("<")}, {n:">", a:()=>ins(">")}, {n:"</", a:()=>ins("</")},
+    {n:'=""', a:()=>ins('=""')}, {n:"( )", a:()=>ins("()")}, {n:"{ }", a:()=>ins("{}")},
+    {n:"[ ]", a:()=>ins("[]")}, {n:"' '", a:()=>ins("''")}, {n:'" "', a:()=>ins('""')},
+    {n:";", a:()=>ins(";")}, {n:"Tab ⮕", a:()=>ins("  ")}, {n:"", a:()=>ins("")}
+  ],
+  html: [
+    {n:"<style>", a:()=>wrap("<style>\n","\n</style>")},
+    {n:"<script>", a:()=>wrap("<script>\n","\n<\/script>")},
+    {n:"<div>", a:()=>wrap("<div>","</div>")},
+    {n:"<h1>", a:()=>wrap("<h1>","</h1>")},
+    {n:"<p>", a:()=>wrap("<p>","</p>")},
+    {n:"<body>", a:()=>wrap("<body>\n","\n</body>")},
+    {n:"<meta>", a:()=>ins('<meta charset="UTF-8">')},
+    {n:"<link>", a:()=>ins('<link rel="stylesheet" href="">')}
+  ],
+  css: [
+    {n:"flex", a:()=>ins("display: flex;")},
+    {n:"center", a:()=>ins("justify-content: center; align-items: center;")},
+    {n:"gap", a:()=>ins("gap: 10px;")},
+    {n:"radius", a:()=>ins("border-radius: 8px;")},
+    {n:"border", a:()=>ins("border: 1px solid #000;")},
+    {n:"padding", a:()=>ins("padding: 10px;")}
+  ],
+  js: [
+    {n:"console", a:()=>ins('console.log("");')},
+    {n:"alert", a:()=>ins('alert("");')},
+    {n:"function", a:()=>ins('function name() {\n  \n}')}
+  ]
 };
 
-function openPopup(type) {
-  grid.innerHTML = "";
-  data[type].forEach(item => {
-    const btn = document.createElement("button");
-    btn.textContent = item.n;
-    btn.onclick = () => { item.a(); closePopup(); runCode(); };
-    grid.appendChild(btn);
-  });
-  popup.style.display = "flex";
-}
-function closePopup() { popup.style.display = "none"; }
-
+/* HÀM CHÈN VÀ TỰ ĐỘNG CĂN CON TRỎ */
 function ins(val) {
   const s = textarea.selectionStart;
-  textarea.value = textarea.value.slice(0, s) + val + textarea.value.slice(textarea.selectionEnd);
+  const e = textarea.selectionEnd;
+  textarea.setRangeText(val, s, e, 'end');
+  
+  // Logic đưa con trỏ vào giữa
+  const midPairs = ["()", '""', "''", "{}", "[]", "><"];
+  if (midPairs.includes(val)) {
+    textarea.selectionStart = textarea.selectionEnd = s + 1;
+  } else if (val === '=""') {
+    textarea.selectionStart = textarea.selectionEnd = s + 2;
+  } else if (val === "") {
+    textarea.selectionStart = textarea.selectionEnd = s + 5;
+  }
+  
   textarea.focus();
   updateLineNumbers();
 }
@@ -97,12 +126,30 @@ function wrap(open, close) {
   const s = textarea.selectionStart;
   const e = textarea.selectionEnd;
   const sel = textarea.value.substring(s, e);
-  textarea.value = textarea.value.slice(0, s) + open + sel + close + textarea.value.slice(e);
+  textarea.setRangeText(open + sel + close, s, e, 'end');
+  
+  if (s === e) {
+    textarea.selectionStart = textarea.selectionEnd = s + open.length;
+  }
   textarea.focus();
   updateLineNumbers();
 }
 
-/* LOGIC SỐ DÒNG & SCROLL */
+/* GIAO DIỆN POPUP */
+function openPopup(type) {
+  grid.innerHTML = "";
+  document.getElementById("pop-title").innerText = type.toUpperCase() + " TOOLS";
+  data[type].forEach(item => {
+    const btn = document.createElement("button");
+    btn.textContent = item.n;
+    btn.onclick = () => { item.a(); runCode(); }; 
+    grid.appendChild(btn);
+  });
+  popup.style.display = "flex";
+}
+function closePopup() { popup.style.display = "none"; }
+
+/* LOGIC SỐ DÒNG & DEBUG */
 function updateLineNumbers(errorLine = null) {
   const lines = textarea.value.split('\n').length;
   let lineStr = '';
@@ -113,54 +160,27 @@ function updateLineNumbers(errorLine = null) {
 }
 function syncScroll() { lineNumbers.scrollTop = textarea.scrollTop; }
 
-/* CHẠY VÀ DEBUG CHÍNH XÁC */
 function runCode() {
   const userCode = textarea.value;
   errorLog.style.display = "none";
   updateLineNumbers();
 
-  // Tạo nội dung chạy với hệ thống bắt lỗi Column
-  const blobContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>body{margin:10px; font-family:sans-serif;}</style>
-      <script>
-        window.onerror = function(msg, url, line, col) {
-          // Gửi đầy đủ msg, line, col về trang cha
-          window.parent.postMessage({
-            type: 'error',
-            msg: msg,
-            line: line - 19, // Trừ 11 dòng hệ thống phía trên
-            col: col
-          }, '*');
-          return true;
-        };
-      <\/script>
-    </head>
-    <body>
-      ${userCode}
-    </body>
-    </html>
-  `;
+  const blobContent = `<!DOCTYPE html><html><head><style>body{margin:10px;font-family:sans-serif;}</style>
+<script>window.onerror=function(m,u,l,c){window.parent.postMessage({type:'error',msg:m,line:l-2,col:c},'*');return true;};<\/script></head>
+<body>${userCode}</body></html>`;
   
   const blob = new Blob([blobContent], { type: 'text/html' });
   preview.src = URL.createObjectURL(blob);
 }
 
-// Lắng nghe tin nhắn lỗi
 window.addEventListener('message', (e) => {
   if (e.data.type === 'error') {
     const { msg, line, col } = e.data;
     errorLog.style.display = "block";
-    
-    // SỬA DÒNG NÀY: Dùng dấu backtick ` và xóa dấu \ trước dấu $
-    errorLog.innerHTML = `⚠️ <b>LỖI:</b> ${msg} <br> [Dòng: ${line}, Ký tự thứ: ${col}]`;
-    
-    updateLineNumbers(line);
+    errorLog.innerHTML = "⚠️ <b>LỖI:</b> " + msg + "<br>[Dòng: " + line + ", Cột: " + col + "]";
+    if (line > 0) updateLineNumbers(line);
   }
 });
-
 
 updateLineNumbers();
 runCode();
