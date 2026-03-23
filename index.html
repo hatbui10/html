@@ -23,13 +23,15 @@
 
   /* NỘI DUNG CHÍNH */
   .main-content { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 0;}
-  .window-pane {
+.window-pane {
   display: none;
   height: 100%;
   width: 100%;
   flex-direction: column;
-  overflow: hidden; /* 👈 chặn tràn */
-  }
+  overflow: hidden;
+
+  min-height: 0; /* 👈 THỨ BẠN THIẾU */
+}
  
  
  
