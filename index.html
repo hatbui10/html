@@ -12,7 +12,7 @@
   .topbar { display: flex; gap: 6px; padding: 10px; background: #111; border-bottom: 1px solid #333; overflow-x: auto; align-items: center; height: 50px; }
   .topbar button { padding: 8px 12px; border: none; border-radius: 6px; background: #333; color: white; cursor: pointer; font-size: 11px; white-space: nowrap; }
   .btn-reload { background: #ce9178 !important; color: #000 !important; font-weight: bold; }
-  .btn-undo { background: #555 !important; color: #fff !important; } /* Màu nút Undo */
+  .btn-history { background: #444 !important; color: #fff !important; } /* Màu nút Undo/Redo */
   .btn-run { background: #28a745 !important; margin-left: auto; font-weight: bold; padding: 8px 20px !important; }
 
   /* HỆ THỐNG TAB */
@@ -25,7 +25,7 @@
   .window-pane { display: none; height: 100%; width: 100%; flex-direction: column; }
   .window-pane.active { display: flex; }
 
-  /* EDITOR SỬA LỖI CUỘN DÒNG 1 */
+  /* EDITOR */
   .editor-container { display: flex; flex: 1; background: #1e1e1e; overflow: hidden; position: relative; }
   .line-numbers { width: 40px; padding: 15px 0; text-align: center; background: #252526; color: #858585; font-family: monospace; font-size: 14px; line-height: 20px; user-select: none; overflow: hidden; }
   .line-error { color: #ff4d4d !important; font-weight: bold; background: rgba(255, 77, 77, 0.2); }
@@ -37,64 +37,31 @@
     overflow: auto; overscroll-behavior: contain; 
   }
 
-  /* KẾT QUẢ (IFRAME 95% CĂN GIỮA) */
+  /* PREVIEW */
   #pane-preview { align-items: center; background: #1a1a1a; }
   iframe { 
     width: 95%; height: 95%; border: none; background: white; 
     margin: auto; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.5); 
   }
 
-  /* BÁO LỖI */
   #error-log { display: none; background: #4a1515; color: #ff9999; padding: 10px; font-family: monospace; font-size: 12px; }
 
   /* POPUP */
-.popup {
-  display: none; 
-  position: fixed;
-  bottom: 10px; 
-  left: 50%;
-  transform: translateX(-50%); 
-  width: 95%;
-  background: #252526;
-  border: 2px solid #0078d4;
-  padding: 2px 3px;
-  z-index: 9999; 
-  border-radius: 8px;
-  box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
-}
-
-.grid {
-  display: flex;
-  flex-flow: column wrap; 
-  height: 50px; 
-  gap: 6px;
-  margin-top: 5px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 3px; 
-}
-
-.grid::-webkit-scrollbar { height: 0px; }
-
-.grid button {
-  flex: 0 0 auto;
-  padding: 1px 3px; 
-  height: calc(50% - 3px); 
-  white-space: nowrap;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #333;
-  color: #ddd;
-  font-size: 12px;
-  font-weight: bold;
-}
-  </style>
+  .popup {
+    display: none; position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); 
+    width: 95%; background: #252526; border: 2px solid #0078d4; padding: 2px 3px; 
+    z-index: 9999; border-radius: 8px; box-shadow: 0 -5px 15px rgba(0,0,0,0.5);
+  }
+  .grid { display: flex; flex-flow: column wrap; height: 50px; gap: 6px; margin-top: 5px; overflow-x: auto; overflow-y: hidden; padding-bottom: 3px; }
+  .grid button { flex: 0 0 auto; padding: 1px 3px; height: calc(50% - 3px); white-space: nowrap; border: 1px solid #444; border-radius: 4px; background: #333; color: #ddd; font-size: 12px; font-weight: bold; }
+</style>
 </head>
 <body>
 
 <div class="topbar">
   <button class="btn-reload" onclick="resetEditor()">🔄 Reset</button>
-  <button class="btn-undo" onclick="undo()">↩ Undo</button>
+  <button class="btn-history" onclick="undo()">↩ Undo</button>
+  <button class="btn-history" onclick="redo()">↪ Redo</button>
   <button onclick="openPopup('quick')">⌨️ Phím nhanh</button>
   <button onclick="openPopup('html')">HTML</button>
   <button onclick="openPopup('css')">CSS</button>
@@ -112,13 +79,12 @@
     <div class="editor-container">
       <div id="line-numbers" class="line-numbers"></div>
       <textarea id="code" spellcheck="false" oninput="handleInput()" onscroll="syncScroll()"><h1>Chào mừng bạn!</h1>
-<p>Bạn đã có thể vuốt lên dòng 1 dễ dàng.</p>
+<p>Dùng nút Undo/Redo để quản lý lịch sử code.</p>
 <script>
-  console.log("Giao diện đã sẵn sàng!");
+  console.log("Sẵn sàng!");
 </script></textarea>
     </div>
   </div>
-
   <div id="pane-preview" class="window-pane">
     <iframe id="preview"></iframe>
   </div>
@@ -141,31 +107,43 @@ const preview = document.getElementById("preview");
 const grid = document.getElementById("grid");
 const popup = document.getElementById("popup");
 
-// QUẢN LÝ LỊCH SỬ (UNDO)
-let history = [textarea.value];
-function saveHistory() {
-  if (textarea.value !== history[history.length - 1]) {
-    history.push(textarea.value);
-    if (history.length > 50) history.shift(); // Giới hạn 50 bước
+// QUẢN LÝ LỊCH SỬ (UNDO/REDO)
+let historyStack = [textarea.value];
+let redoStack = [];
+
+function saveToHistory() {
+  const currentVal = textarea.value;
+  if (currentVal !== historyStack[historyStack.length - 1]) {
+    historyStack.push(currentVal);
+    redoStack = []; // Khi có thay đổi mới, xóa redo stack
+    if (historyStack.length > 50) historyStack.shift();
   }
 }
 
 function undo() {
-  if (history.length > 1) {
-    history.pop(); // Bỏ trạng thái hiện tại
-    textarea.value = history[history.length - 1];
+  if (historyStack.length > 1) {
+    const current = historyStack.pop();
+    redoStack.push(current);
+    textarea.value = historyStack[historyStack.length - 1];
+    updateLineNumbers();
+  }
+}
+
+function redo() {
+  if (redoStack.length > 0) {
+    const next = redoStack.pop();
+    historyStack.push(next);
+    textarea.value = next;
     updateLineNumbers();
   }
 }
 
 function handleInput() {
-  saveHistory();
+  saveToHistory();
   updateLineNumbers();
 }
 
-function syncScroll() {
-  lineNumbers.scrollTop = textarea.scrollTop;
-}
+function syncScroll() { lineNumbers.scrollTop = textarea.scrollTop; }
 
 function updateLineNumbers(errorLine = null) {
   const lines = textarea.value.split('\n').length;
@@ -245,7 +223,7 @@ function ins(val) {
   const s = textarea.selectionStart, e = textarea.selectionEnd;
   textarea.setRangeText(val, s, e, 'end');
   textarea.focus();
-  saveHistory();
+  saveToHistory();
   updateLineNumbers();
 }
 
@@ -254,7 +232,7 @@ function wrap(open, close) {
   const sel = textarea.value.substring(s, e);
   textarea.setRangeText(open + sel + close, s, e, 'end');
   textarea.focus();
-  saveHistory();
+  saveToHistory();
   updateLineNumbers();
 }
 
@@ -282,11 +260,11 @@ window.addEventListener('message', (e) => {
 });
 
 function resetEditor() {
-  if(confirm("Xóa hết code hiện tại?")) {
-    textarea.value = "<h1>Chào mừng bạn!</h1>\n<p>Hãy vuốt xuống để xem dòng code dài.</p>";
-    history = [textarea.value];
+  if(confirm("Reset code?")) {
+    textarea.value = "<h1>Chào mừng!</h1>";
+    historyStack = [textarea.value];
+    redoStack = [];
     updateLineNumbers();
-    runCode();
   }
 }
 
