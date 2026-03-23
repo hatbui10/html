@@ -184,9 +184,50 @@ function updateLineNumbers(errorLine = null) {
 function runCode() {
   const userCode = textarea.value;
   errorLog.style.display = "none";
-  const blobContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:15px;overflow: auto; /* 👈 BẮT BUỘC */
-    box-sizing: border-box;}</style><script>window.onerror=function(m,u,l,c){window.parent.postMessage({type:'error',msg:m,line:l,col:c},'*');return true;};<\/script></head><body>${userCode}</body></html>`;
-  const blob = new Blob([blobContent], { type: 'text/html;charset=UTF-8' });
+  
+ 
+ 
+ 
+ const blobContent = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* 👈 chặn luôn body */
+  }
+
+  #app {
+    height: 100%;
+    overflow: auto; /* 👈 scroll ở đây */
+    padding: 10px;
+    box-sizing: border-box;
+  }
+</style>
+
+<script>
+window.onerror=function(m,u,l,c){
+  window.parent.postMessage({type:'error',msg:m,line:l,col:c},'*');
+  return true;
+};
+<\/script>
+</head>
+
+<body>
+  <div id="app">
+    ${userCode}
+  </div>
+</body>
+</html>`;
+ 
+ 
+ 
+ 
+ const blob = new Blob([blobContent], { type: 'text/html;charset=UTF-8' });
   preview.src = URL.createObjectURL(blob);
 }
 
