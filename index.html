@@ -9,14 +9,14 @@
   body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; background: #1a1a1a; color: white; overflow: hidden; }
   
   /* THANH CÔNG CỤ */
-  .topbar { display: flex; gap: 6px; padding: 10px; background: #111; border-bottom: 1px solid #333; overflow-x: auto; align-items: center; height: 50px; }
+  .topbar { display: flex; gap: 6px; padding: 10px; background: #111; border-bottom: 1px solid #333; overflow-x: auto; align-items: center; height: 50px;flex-shrink: 0; }
   .topbar button { padding: 8px 12px; border: none; border-radius: 6px; background: #333; color: white; cursor: pointer; font-size: 11px; white-space: nowrap; }
   .btn-reload { background: #ce9178 !important; color: #000 !important; font-weight: bold; }
   .btn-history { background: #444 !important; color: #fff !important; } /* Màu nút Undo/Redo */
   .btn-run { background: #28a745 !important; margin-left: auto; font-weight: bold; padding: 8px 20px !important; }
 
   /* HỆ THỐNG TAB */
-  .tab-bar { display: flex; background: #252526; padding-left: 10px; gap: 2px; border-bottom: 1px solid #333; user-select: none; height: 40px; }
+  .tab-bar { display: flex; background: #252526; padding-left: 10px; gap: 2px; border-bottom: 1px solid #333; user-select: none; height: 40px;flex-shrink: 0; }
   .tab-item { padding: 8px 20px; cursor: pointer; background: #2d2d2d; color: #969696; font-size: 12px; font-weight: 500; border-radius: 5px 5px 0 0; margin-top: 5px; display: flex; align-items: center; gap: 8px; }
   .tab-item.active { background: #1e1e1e; color: #ffffff; border-bottom: 2px solid #007acc; }
 
