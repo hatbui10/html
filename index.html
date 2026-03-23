@@ -178,12 +178,14 @@
   <button onclick="openPopup('html')">HTML</button>
   <button onclick="openPopup('css')">CSS</button>
   <button onclick="openPopup('js')">JS</button>
-  <button class="btn-run" onclick="runCode()">CHẠY & XEM ▶</button>
+  <button class="btn-run" style="background: #007acc !important;" onclick="saveCurrentFile()">💾 LƯU FILE</button>
+  <button class="btn-run" onclick="runCode()">CHẠY ▶</button>
 </div>
 
-<div class="tab-bar">
+<div class="tab-bar" id="tab-container">
   <div class="tab-item active" id="tab-editor" onclick="switchTab('editor')">📄 CHỈNH SỬA CODE</div>
   <div class="tab-item" id="tab-preview" onclick="switchTab('preview')">👁️ KẾT QUẢ</div>
+  
 </div>
 
 <div class="main-content">
@@ -219,9 +221,56 @@ const errorLog = document.getElementById("error-log");
 const preview = document.getElementById("preview");
 const grid = document.getElementById("grid");
 const popup = document.getElementById("popup");
+const tabContainer = document.getElementById("tab-container");
 
-let historyStack = [textarea.value];
+
+
+// QUẢN LÝ FILE VÀ TAB
+let files = [{ name: "index.html", content: "<h1>Chào mừng!</h1>" }];
+let activeIdx = 0;
+let historyStack = [files[0].content];
 let redoStack = [];
+
+function renderTabs() {
+  tabContainer.innerHTML = '';
+  files.forEach((file, index) => {
+    const tab = document.createElement('div');
+    tab.className = `tab-item ${index === activeIdx ? 'active' : ''}`;
+    tab.innerHTML = `📄 ${file.name}`;
+    tab.onclick = () => switchFile(index);
+    tabContainer.appendChild(tab);
+  });
+  
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn-add-tab';
+  addBtn.innerText = '+';
+  addBtn.onclick = () => {
+    const name = prompt("Tên file mới:", "file_" + (files.length + 1) + ".html");
+    if(name) {
+      files.push({ name: name, content: "" });
+      switchFile(files.length - 1);
+    }
+  };
+  tabContainer.appendChild(addBtn);
+}
+
+function switchFile(index) {
+  // Lưu nội dung cũ trước khi chuyển
+  files[activeIdx].content = textarea.value;
+  
+  activeIdx = index;
+  textarea.value = files[activeIdx].content;
+  
+  // Reset lịch sử cho file mới (hoặc bạn có thể lưu history vào object file nếu muốn nâng cao)
+  historyStack = [textarea.value];
+  redoStack = [];
+  
+  renderTabs();
+  updateLineNumbers();
+  switchTab('editor');
+}
+
+
 
 function saveToHistory() {
   const currentVal = textarea.value;
@@ -406,9 +455,36 @@ function loadFile(input) {
   reader.readAsText(file);
 }
 
+function saveCurrentFile() {
+
+  const activeFile = files[activeIdx];
+  const text = textarea.value;
+  const filename = activeFile ? activeFile.name : "code.html";
+  
+  const blob = new Blob([text], { type: "text/plain" });
+  const anchor = document.createElement("a");
+  
+  anchor.download = filename;
+  anchor.href = window.URL.createObjectURL(blob);
+  anchor.target = "_blank";
+  anchor.style.display = "none"; // Không hiển thị nút này
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}
+
+function saveToLocal() {
+   const activeFile = files[activeIdx];   
+   activeFile.content = textarea.value;
+    localStorage.setItem('myEditorFiles', JSON.stringify(files));
+}
+// Gọi hàm này trong oninput của textarea
+
 
 function resetEditor() { if(confirm("Reset code?")) { textarea.value = "<h1>Chào mừng!</h1>"; historyStack = [textarea.value]; redoStack = []; updateLineNumbers(); } }
 updateLineNumbers();
 </script>
 </body>
 </html>
+
+
